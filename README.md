@@ -31,5 +31,5 @@ If you have something like `<?php mp_product(); ?>` in there, you should delete 
 Changelog
 ---------
 
-= 1.0 =
+** 1.0 **
 * First version
