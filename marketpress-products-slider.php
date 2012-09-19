@@ -18,10 +18,9 @@ define('MPS_FEATURED_SLIDER_WIDTH',        1170);            //you should enter 
 define('MPS_FEATURED_SLIDER_HEIGHT',       300);             //the height of the featured slider (px)
 define('MPS_FEATURED_SLIDER_IMAGE_WIDTH',  580);             //the width of your slider image (px)
 define('MPS_FEATURED_SLIDER_IMAGE_TITLE',  'View Product');  //the title of your slider image. WIll be visible when hovering the image
-define('MPS_FEATURED_SLIDER_COUNT',        '1');             //how many products you want shown in the slider
+define('MPS_FEATURED_SLIDER_COUNT',        '4');             //how many products you want shown in the slider
 define('MPS_FEATURED_SLIDER_SPEED',        8000);            //time for slides (ms)
 define('MPS_SLIDER_TYPE',                  'slide');         //Select your animation type, 'fade' or 'slide'
-
 
 /*
  * Include wpthumb if it is not already installed
@@ -32,6 +31,7 @@ if (!class_exists('WP_Thumb') ) {
 	define( 'WP_THUMB_URL', plugins_url( '/includes/wpthumb/', __FILE__ ));
 	require_once( MARKETPRESS_FEATURED_SLIDER_PATH . 'includes/wpthumb/wpthumb.php' );
 }
+define('MPS_PLUGIN_IMAGES_URL', plugins_url( '/images/', __FILE__ ));
 
 /*
  * Builds the slider that will be used in the frontpage of you site.
@@ -91,8 +91,8 @@ function mps_featured_slider(){
 	.home-slider ul.flex-direction-nav {position:absolute;height:50px;width:120px;bottom:10px;right:10px;}
 	.home-slider ul.flex-direction-nav li a {opacity:0.8;background:#333;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;width:45px;height:45px;}
 	.home-slider ul.flex-direction-nav li a:hover { opacity:1; }
-	.home-slider ul.flex-direction-nav li a.flex-prev {right:5px;background:#333 url("images/arrow_slider_left.png") no-repeat center center;left:20px;}
-	.home-slider ul.flex-direction-nav li a.flex-next {left:5px;background:#333 url("images/arrow_slider_right.png") no-repeat center center;left:75px;}
+	.home-slider ul.flex-direction-nav li a.flex-prev {right:5px;background:#333 url("<?php echo MPS_PLUGIN_IMAGES_URL ?>arrow_slider_left.png") no-repeat center center;left:20px;}
+	.home-slider ul.flex-direction-nav li a.flex-next {left:5px;background:#333 url("<?php echo MPS_PLUGIN_IMAGES_URL ?>arrow_slider_right.png") no-repeat center center;left:75px;}
 	</style>
 	<div class="region-divider"></div>
 	<?php
@@ -187,14 +187,14 @@ function mps_single_product_images_slider($echo, $id){
 function mps_product_with_slider($id){
 	$post = get_post($product_id);
 	
-	$content .= single_product_images_slider(false, $id);
-	$content .= '<div itemprop="description" class="mp_product_content">';
-	$content .= apply_filters('the_content', $post->post_content);
-	$content .= '</div>';
 	$content .= '<div itemprop="offers" itemscope itemtype="http://schema.org/Offer" class="mp_product_meta">';
 	$content .= mp_product_price(false, $id);
 	$content .= mp_buy_button(false, 'single', $id);
 	$content .= '</div>';
+	$content .= '<div itemprop="description" class="mp_product_content">';
+	$content .= apply_filters('the_content', $post->post_content);
+	$content .= '</div>';
+	$content .= single_product_images_slider(false, $id);
 	
 	echo $content;
 }
