@@ -20,7 +20,6 @@
   height:253px;
 }
 .home-slider .flexslider ul.slides li .flex-caption {
-  width:50%;
   padding:0;
   position:absolute;
   left:0;
@@ -85,7 +84,6 @@
 .home-slider .flexslider ul.slides li .slider_product_meta .mp_buy_form { text-align:center; }
 .home-slider .flexslider ul.slides li .slider_product_meta .mp_buy_form .mp_quantity { display:none; }
 .home-slider .flexslider ul.slides li .image-wrapper {
-  width:50%;
   float:right;
   height:300px;
 }
