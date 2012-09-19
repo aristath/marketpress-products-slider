@@ -10,13 +10,43 @@ Version: 1.0
 Author URI: http://aristeides.com
 */
 
+
+/*
+ * You can set this plugin's configuration options below
+ */
+define('MPS_FEATURED_SLIDER_WIDTH',        1170);            //you should enter your theme's width here (px)
+define('MPS_FEATURED_SLIDER_HEIGHT',       300);             //the height of the featured slider (px)
+define('MPS_FEATURED_SLIDER_IMAGE_WIDTH',  580);             //the width of your slider image (px)
+define('MPS_FEATURED_SLIDER_IMAGE_TITLE',  'View Product');  //the title of your slider image. WIll be visible when hovering the image
+define('MPS_FEATURED_SLIDER_COUNT',        '3');             //how many products you want shown in the slider
+define('MPS_FEATURED_SLIDER_SPEED',        8000);            //time for slides (ms)
+define('MPS_SLIDER_TYPE',                  'slide');         //Select your animation type, 'fade' or 'slide'
+
+
+/*
+ * Include wpthumb if it is not already installed
+ */
+define( 'MARKETPRESS_FEATURED_SLIDER_PATH', plugin_dir_path(__FILE__) );
+if (!class_exists('WP_Thumb') ) {
+	define( 'WP_THUMB_PATH', trailingslashit( MARKETPRESS_FEATURED_SLIDER_PATH . '/includes/wpthumb' ) );
+	define( 'WP_THUMB_URL', plugins_url( '/includes/wpthumb/', __FILE__ ));
+	require_once( MARKETPRESS_FEATURED_SLIDER_PATH . 'includes/wpthumb/wpthumb.php' );
+}
+
+/*
+ * Builds the slider that will be used in the frontpage of you site.
+ * To include this in your homepage you MUST enter the following
+ * in your template file (front-page.php, index.php or other):
+ * <?php mps_featured_slider(); ?>
+ */
+
 function mps_featured_slider(){
 	global $mp;
 	//The Query
 	$custom_query = new WP_Query( array(
 		'post_type'      => 'product',
 		'post_status'    => 'publish',
-		'posts_per_page' => '3'
+		'posts_per_page' => MPS_FEATURED_SLIDER_COUNT
 	));
 	$slides_count = $custom_query->post_count;
 	if ($slides_count >= 1) { 
@@ -33,17 +63,28 @@ function mps_featured_slider(){
 	<script type="text/javascript" charset="utf-8">
 	jQuery(window).load(function() {
 		jQuery('.home-slider .flexslider').flexslider({
-			slideshowSpeed: 10000,
+			slideshowSpeed: <?php echo MPS_FEATURED_SLIDER_SPEED ?>,
 			controlNav: false,
-			animation: 'slide'
+			animation: <?php echo MPS_SLIDER_TYPE ?>
 		});
 	});
 	</script>
+	<style>
+	.home-slider .flexslider ul.slides li .flex-caption {
+		width: <?php echo (MPS_FEATURED_SLIDER_WIDTH - MPS_FEATURED_SLIDER_IMAGE_WIDTH); ?>px;
+	}
+	.home-slider .flexslider ul.slides li .image-wrapper {
+		width: <?php echo MPS_FEATURED_SLIDER_IMAGE_WIDTH ?>px;
+	}
+	</style>
 	<div class="region-divider"></div>
 	<?php
 	}
 }
 
+/*
+ * The slide for individual products on the featured products slider
+ */
 function mps_slider_product($echo = true, $product_id, $title = true, $content = 'full', $image = 'single', $meta = true) {
 	global $mp;
 	$post = get_post($product_id);
@@ -72,7 +113,7 @@ function mps_slider_product($echo = true, $product_id, $title = true, $content =
 		}
 		$content .= '</div>';
 		if ($image) {
-			$content .= mps_slider_product_image( false, $image, $post->ID );
+			$content .= mps_product_photo( false, $post->ID, true, MPS_FEATURED_SLIDER_IMAGE_WIDTH, MPS_FEATURED_SLIDER_IMAGE_HEIGHT, true, true, false, MPS_FEATURED_SLIDER_IMAGE_TITLE );
 		}
 	$content .= '</li>';
 	
@@ -82,29 +123,10 @@ function mps_slider_product($echo = true, $product_id, $title = true, $content =
 		return $content;
 }
 
-function mps_slider_product_image( $echo = true, $context = 'list', $post_id = NULL, $size = NULL ) {
-	global $id;
-	$post_id = ( NULL === $post_id ) ? $id : $post_id;
-	$post_id = apply_filters('mp_product_image_id', $post_id);
-	$post = get_post($post_id);
-	$settings = get_option('mp_settings');
-	$post_thumbnail_id = get_post_thumbnail_id( $post_id );
-	$size = 'slide';
-	//link
-	$temp = wp_get_attachment_image_src( $post_thumbnail_id, 'large' );
-	$link = get_permalink($post_id);
-	$title = __('View Product', 'mps');
-	$image = get_the_post_thumbnail($post_id, $size, array('itemprop' => 'image', 'class' => 'alignleft product_image_'.$context, 'title' => $title));
-	//add the link
-	if ($link)
-		$image = '<div class="image-wrapper"><a id="product_image-' . $post_id . '"' . $class . ' href="' . $link . '">' . $image . '</a></div>';
-	
-	if ($echo)
-		echo $image;
-	else
-		return $image;
-}
-
+/*
+ * Builds the slider for single products
+ * with multiple image attachments
+ */
 function mps_single_product_images_slider($echo, $id){
 	$attachments = get_posts( array(
 		'post_type' => 'attachment',
@@ -142,6 +164,9 @@ function mps_single_product_images_slider($echo, $id){
 	
 }
 
+/*
+ * Build the single product content
+ */
 function mps_product_with_slider($id){
 	$post = get_post($product_id);
 	
@@ -157,9 +182,88 @@ function mps_product_with_slider($id){
 	echo $content;
 }
 
+/*
+ * Scale and crop photos using wpthumb.
+ */
+function mps_product_photo( $echo = true, $post_id = NULL, $link = true, $width = NULL, $height = NULL, $crop = true, $resize = true, $stretch = false, $title = '' ) {
+	global $id;
+	$post_id = ( NULL === $post_id ) ? $id : $post_id;
+	$post_id = apply_filters('mp_product_image_id', $post_id);
+	$post = get_post($post_id);
+	$post_thumbnail_id = get_post_thumbnail_id( $post_id );
+	
+	if ($stretch == true){
+		$thumbnail_attr = wp_get_attachment_image_src( $post_thumbnail_id );
+		$thumb_url      = $thumbnail_attr[0];
+		$thumb_width    = $thumbnail_attr[1];
+		$thumb_height   = $thumbnail_attr[2];
+		
+		if ($thumb_width < $width && $thumb_height < $height) {
+			$thumbsize = 'small';
+		}
+		elseif ($thumb_width < $width && $thumb_height > $height) {
+			$thumbsize = 'narrow';
+		}
+		elseif ($thumb_width > $width && $thumb_height < $height) {
+			$thumbsize = 'short';
+		}
+		elseif ($thumb_width > $width && $thumb_height > $height) {
+			$thumbsize = 'ok';
+		}
+		
+		if ($thumbsize == 'small'){
+			$thumbstyle = 'width: ' . $width . 'px; height: ' . $height . 'px;';
+		}
+		elseif ($thumbsize == 'narrow'){
+			$thumbstyle = 'width: ' . $width . 'px; height: auto;';
+		}
+		elseif ($thumbsize == 'short'){
+			$thumbstyle = 'width: auto; height: ' . $height . 'px;';
+		}
+		elseif ($thumbsize == 'ok'){
+			$thumbstyle = '';
+		}
+	} else {
+		$thumbstyle = '';
+	}
+
+	$size = '"width=' . $width . '&height=' . $height . '&crop=' . $crop . '"'; 
+	
+	$title_i18n = __($title, 'basic');
+
+	$productlink = get_permalink($post_id);
+	$image = get_the_post_thumbnail($post_id, array( 'width' => $width, 'height' => $height, 'crop' => $crop, 'resize' => $resize ), array('style' => $thumbstyle, 'itemprop' => 'image', 'class' => 'product_image', 'title' => $title_i18n));
+
+	$content = '<div class="image-wrapper">';
+	if ($link == true){
+		if ($productlink){
+			$content .= '<a id="product_image-' . $post_id . '"' . $class . ' href="' . $productlink . '">';
+		}
+	}
+	$content .= $image;
+	if ($link == true){
+		if ($productlink){
+			$content .= '</a>';
+		}
+	}
+	$content .= '</div>';
+
+	if ($echo)
+		echo $content;
+	else
+		return $content;
+}
+
+/*
+ * enqueue plugin's stylesheet
+ * and jquery.flexslider.min.js
+ */
 function mps_scripts_and_styles() {
 	wp_register_style('flexslider-css', plugins_url('includes/flexslider/flexslider.css', __FILE__), false, null);
 	wp_enqueue_style('flexslider-css');
+	
+	wp_register_style('mps-custom-css', plugins_url('includes/style.css', __FILE__), false, null);
+	wp_enqueue_style('mps-custom-css');
 	
 	wp_register_script('flexslider-js', plugins_url('includes/flexslider/jquery.flexslider.min.js', __FILE__), false, null, false);
 	wp_enqueue_script('flexslider-js');
