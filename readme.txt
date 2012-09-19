@@ -20,6 +20,11 @@ It requires that you have access to your theme files to add the necessary code. 
 * It creates a products slider which can be placed in your homepage
 * It creates a slider which can be used for single products that have multiple images. When used this way, remember not to insert the images to the post. Simply attaching them will suffice.
 
+TODO:
+
+* Custom field in products to select which ones are featured on the frontpage
+* If we set wpthumb's resize=false, sometimes images are not generated. That's why it's set to true.
+
 == Installation ==
 
 Upload to your Plugins folder and activate.
